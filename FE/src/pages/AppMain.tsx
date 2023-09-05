@@ -1,7 +1,9 @@
+import Main from '@/components/main/Main';
+
 const AppMain = () => {
     return (
         <div>
-            메인페이지
+            <Main />
         </div>
     )
 }

@@ -1,7 +1,11 @@
 import { HttpJson } from "./Http";
 
-const RequestTest =async (params: object, success: (data : {data : object}) => void, fail: (error: unknown) => void) => {
-    await HttpJson.get(`/test`, {params : params}).then(success).catch(fail);
+interface props {
+    diary : string
+}
+
+const RequestTest =async (param: object, success: (data : {data : props}) => void, fail: (error: unknown) => void) => {
+    await HttpJson.post(`/diary`, JSON.stringify(param)).then(success).catch(fail);
 }
 
 export { RequestTest };
