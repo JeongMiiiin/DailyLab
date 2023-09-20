@@ -1,6 +1,8 @@
 package com.amor4ti.dailylab.domain.entity;
 
+import com.amor4ti.dailylab.domain.entity.category.Category;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -17,18 +19,37 @@ public class Todo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long todoId;
 
-    @ManyToOne
-    @JoinColumn(name = "memberId")
-    private Member member;
     private String content;
-
-    private LocalDate createdDate;
+    private LocalDate todoDate;
     private LocalDateTime checkedDate;
     private boolean isSystem;
     private boolean isDeleted;
 
-    @PrePersist
-    public void onPrePersist() {
-        this.createdDate = LocalDate.now();
+    @ManyToOne
+    @JoinColumn(name = "memberId")
+    private Member member;
+
+    @ManyToOne
+    @JoinColumn(name = "categoryId")
+    private Category category;
+
+    @Builder
+    public Todo(Long todoId, String content, Category category, LocalDate todoDate, LocalDateTime checkedDate, boolean isSystem, boolean isDeleted, Member member) {
+        this.todoId = todoId;
+        this.content = content;
+        this.category = category;
+        this.todoDate = todoDate;
+        this.checkedDate = checkedDate;
+        this.isSystem = isSystem;
+        this.isDeleted = isDeleted;
+        this.member = member;
+    }
+
+    public void deleteTodo() {
+        this.isDeleted = true;
+    }
+
+    public void checkTodo() {
+        this.checkedDate = LocalDateTime.now();
     }
 }

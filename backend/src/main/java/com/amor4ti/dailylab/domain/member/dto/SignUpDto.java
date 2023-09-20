@@ -1,26 +1,24 @@
 package com.amor4ti.dailylab.domain.member.dto;
 
+import java.time.LocalDate;
+
 import com.amor4ti.dailylab.domain.entity.Member;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
 @Getter
 @Builder
+@AllArgsConstructor
 public class SignUpDto {
 
 	private Long memberId;
 	private String gender;
-	private short mbtiId;
-	private String job;
-	private String goal;
-	private String religion;
+	private LocalDate birthDay;
 
 	public void modifyMember(Member updateMember){
 		updateMember.setGender(this.gender);
-		updateMember.setMbtiId(this.mbtiId);
-		updateMember.setJob(this.job);
-		updateMember.setGoal(this.goal);
-		updateMember.setReligion(this.religion);
+		updateMember.setBirthday(this.birthDay);
 	}
 }
