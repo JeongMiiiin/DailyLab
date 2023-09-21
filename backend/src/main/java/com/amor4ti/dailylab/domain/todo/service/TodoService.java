@@ -26,4 +26,6 @@ public interface TodoService {
     CommonResponse changeCheckTodo(Long memberId, TodoCheckUpdateDto todoCheckUpdateDto);
 
     DataResponse recommendTodo(Long memberId, String todoDate);
+
+    List getUnfinishedMemberIdByTodoDate(LocalDate todoDate);
 }

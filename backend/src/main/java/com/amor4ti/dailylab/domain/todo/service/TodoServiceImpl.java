@@ -222,4 +222,10 @@ public class TodoServiceImpl implements TodoService{
 
         return responseService.successDataResponse(ResponseStatus.RESPONSE_SUCCESS, todoRecommendedDtoList);
     }
+
+    @Override
+    @Transactional
+    public List<Long> getUnfinishedMemberIdByTodoDate(LocalDate todoDate){
+        return todoRepository.findMemberIdByTodoDate(todoDate);
+    }
 }

@@ -7,6 +7,7 @@ import org.springframework.data.querydsl.QuerydslPredicateExecutor;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,4 +21,10 @@ public interface TodoRepository extends JpaRepository<Todo, Long>,
 
     @Query("SELECT t FROM Todo t WHERE t.todoId = :todoId")
     Optional<Todo> findByTodoId(@Param("todoId") Long todoId);
+
+    @Query(" SELECT t.member.memberId FROM Todo t " +
+           "  WHERE t.todoDate = :todoDate " +
+           "  GROUP BY t.member.memberId " +
+           " HAVING MAX(t.todoDate) = :todoDate ")
+    List<Long> findMemberIdByTodoDate(@Param("todoDate") LocalDate todoDate);
 }
