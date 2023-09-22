@@ -11,14 +11,27 @@
 import { useState } from "react";
 
 interface CheckboxProps {
-    index: number,
+    todoId: number,
     state: boolean;
     content: string;
     type: string;
-    onCheckboxChange: (index: number, isChecked: boolean) => void;
+
+    categoryId?: number,
+    large?: string,
+    medium?: string,
+    small?: string,
+    todoDate?: string,
+    checkedDate?: string,
+    check?: boolean,
+    memberId?: number,
+    username?: string,
+    system?: boolean,
+    deleted?: boolean
+
+    onCheckboxChange: (todoId: number, isChecked: boolean) => void;
   }
 
-const Checkbox: React.FC<CheckboxProps> = ({ index, state, content, type, onCheckboxChange }) => {
+const Checkbox: React.FC<CheckboxProps> = ({ todoId, state, content, type, onCheckboxChange, small }) => {
     const [checkState, setCheckState] = useState(state);
     const [inputState, setInputState] = useState('input');
     const [contentText, setContentText] = useState(content);
@@ -43,7 +56,7 @@ const Checkbox: React.FC<CheckboxProps> = ({ index, state, content, type, onChec
         // defaultLock 상태에서는 체크처리 불가능
         if(type !== 'defaultLock')
             setCheckState(!checkState)
-        onCheckboxChange(index, !checkState);
+        onCheckboxChange(todoId, !checkState);
     }
 
     return (
@@ -63,7 +76,7 @@ const Checkbox: React.FC<CheckboxProps> = ({ index, state, content, type, onChec
                     ) : (
                         inputState === 'input' ?(
                             <div>
-                                {contentText}
+                                {contentText === '상세내용' && (small)}
                             </div>
                         ) : (
                         <div className="child-[select]:bg-secondary">
