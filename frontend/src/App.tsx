@@ -3,7 +3,8 @@ import AppRouter from "@/router/AppRouter";
 import { RecoilRoot } from 'recoil';
 import './tailwind.css';
 import "@/styles/common/fontImport.css";
-import { register } from './serviceWorkerRegistration';
+// PWA
+import * as serviceWorkerRegistration from './serviceWorkerRegistration';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <RecoilRoot>
@@ -11,4 +12,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   </RecoilRoot>
 )
 
-register;
+serviceWorkerRegistration.register();
