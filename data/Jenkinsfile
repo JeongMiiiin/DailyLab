@@ -4,9 +4,9 @@ pipeline {
         stage("Set Variable") {
             steps {
                 script {
-                    IMAGE_NAME_BE = "dailylab-dev-fastapi"
+                    IMAGE_NAME_BE = "dailylab-prod-fastapi"
                     CONFIG_PATH = "/usr/fastapi"
-                    CONTAINER_NAME_BE = "daily_dev_data"
+                    CONTAINER_NAME_BE = "daily_prod_data"
                     PROJECT_DIR_BE = "data"
                 }
             }
