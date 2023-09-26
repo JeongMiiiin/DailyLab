@@ -4,9 +4,9 @@ pipeline {
         stage("Set Variable") {
             steps {
                 script {
-                    IMAGE_NAME_BE = "dailylab-dev-springboot"
-                    APPLICATION_YML_PATH = "/usr/spring/resources/dev"
-                    CONTAINER_NAME_BE = "daily_dev_be"
+                    IMAGE_NAME_BE = "dailylab-prod-springboot"
+                    APPLICATION_YML_PATH = "/usr/spring/resources/prod"
+                    CONTAINER_NAME_BE = "daily_prod_be"
                     PROJECT_DIR_BE = "backend"
                 }
             }
