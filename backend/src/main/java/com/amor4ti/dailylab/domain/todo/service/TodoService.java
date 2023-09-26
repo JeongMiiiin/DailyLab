@@ -1,11 +1,14 @@
 package com.amor4ti.dailylab.domain.todo.service;
 
+import com.amor4ti.dailylab.domain.todo.dto.request.TodoCheckUpdateDto;
+import com.amor4ti.dailylab.domain.todo.dto.request.TodoContentUpdateDto;
 import com.amor4ti.dailylab.domain.todo.dto.request.TodoRegistDto;
 import com.amor4ti.dailylab.domain.todo.dto.request.TodoUpdateDto;
 import com.amor4ti.dailylab.global.response.CommonResponse;
 import com.amor4ti.dailylab.global.response.DataResponse;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface TodoService {
 
@@ -17,11 +20,13 @@ public interface TodoService {
 
     DataResponse getAllTodoList();
 
-    CommonResponse registTodo(TodoRegistDto todoRegistDto, Long memberId);
+    DataResponse registTodo(TodoRegistDto todoRegistDto, Long memberId);
 
-    CommonResponse deleteTodo(Long memberId, TodoUpdateDto todoUpdateDto);
+    CommonResponse deleteTodo(Long memberId, List<Long> todoIdList);
 
-    CommonResponse checkTodo(Long memberId, TodoUpdateDto todoUpdateDto);
+    CommonResponse changeCheckTodo(Long memberId, TodoCheckUpdateDto todoCheckUpdateDto);
 
-    CommonResponse recommendTodo(Long memberId, String todoDate);
+    DataResponse recommendTodo(Long memberId, String todoDate);
+
+    CommonResponse changeTodoContent(TodoContentUpdateDto todoContentUpdateDto, Long memberId);
 }

@@ -1,37 +1,147 @@
 package com.amor4ti.dailylab.domain.diary.service;
 
-import io.github.flashvayne.chatgpt.dto.chat.MultiChatMessage;
-import io.github.flashvayne.chatgpt.service.ChatgptService;
+import com.amor4ti.dailylab.domain.diary.dto.reqeust.DiaryTodos;
+import com.amor4ti.dailylab.domain.diary.dto.reqeust.RequestDiaryDto;
+import com.amor4ti.dailylab.domain.diary.dto.response.ResponseDiaryDto;
+import com.amor4ti.dailylab.domain.diary.entity.DiaryHistory;
+import com.amor4ti.dailylab.domain.diary.entity.DiaryPredict;
+import com.amor4ti.dailylab.domain.diary.repository.DiaryHistoryRepository;
+import com.amor4ti.dailylab.domain.diary.repository.DiaryPredictRepository;
+import com.amor4ti.dailylab.domain.entity.Member;
+import com.amor4ti.dailylab.domain.entity.MemberStatus;
+import com.amor4ti.dailylab.domain.member.repository.MemberRepository;
+import com.amor4ti.dailylab.domain.member.repository.MemberStatusRepository;
+import com.amor4ti.dailylab.domain.member.service.MemberService;
+import com.amor4ti.dailylab.domain.todo.repository.TodoRepository;
+import com.amor4ti.dailylab.global.exception.CustomException;
+import com.amor4ti.dailylab.global.exception.ExceptionStatus;
+import com.amor4ti.dailylab.global.util.WebClientUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
+
+import java.io.IOException;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DiaryServiceImpl implements DiaryService {
 
-    private final ChatgptService chatgptService;
+    @Value("${data-server-url}")
+    private String DATA_SERVER_URL;
 
-    public String getChatResponse(String prompt) {
-        List<MultiChatMessage> messages = Arrays.asList(
-                new MultiChatMessage("system","너느 다음과 같은 특징을 가진 사람이야\n" +
-                        "                                      성격:내향형\n" +
-                        "                                      성별: 남자\n" +
-                        "                                      생년월일: 1995-02-06\n" +
-                        "                                      이루고 싶은 목표: 취업하기\n" +
-                        "                                      좋아하는 음식: 피자\n" +
-                        "                                      좋아하는 여행지: 뉴욕"),
+    private final MemberService memberService;
 
-                new MultiChatMessage("user","해야할 일\n" +
-                        "                1.한화투자증권 자소서 완성 (수행 함)\n" +
-                        "                2.공통 이력서 첨삭 (수행 안함)\n" +
-                        "                3.비타민 검색하기 (수행 함)\n" +
-                        "                4.두부먹기 (수행 안함)\n" +
-                        "                " +
-                        "                너에게 주어진 역할을 기반으로 해야할 일을 진행한 하루를 돌아보며 2023년 9월 19일 일기를 작성해줘\""));
+    private final WebClientUtil webClientUtil;
+    private final MemberStatusRepository memberStatusRepository;
+    private final DiaryPredictRepository diaryPredictRepository;
+    private final DiaryHistoryRepository diaryHistoryRepository;
+    private final MemberRepository memberRepository;
+    private final TodoRepository todoRepository;
 
-        return chatgptService.multiChat(messages);
+    @Retryable(
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100L)
+    )
+    @Transactional
+    public void createDefaultDiary(Long memberId, LocalDate date) {
+        Member member = memberRepository.findMemberByMemberId(memberId).orElseThrow();
+
+        Optional<DiaryPredict> memberDiary = diaryPredictRepository.findByMemberIdAndDiaryDate(memberId, date);
+        if (memberDiary.isPresent()) {
+            throw new CustomException(ExceptionStatus.TODAY_DIARY_IS_EXIST);
+        }
+
+        List<DiaryTodos> tasks = todoRepository.findTodayTodoListByMemberIdAndTodoDate(memberId, date)
+                .stream()
+                .map(todo -> DiaryTodos.builder()
+                                        .task(todo.getCategory().getSmall())
+                                        .content(todo.getContent())
+                                        .date(todo.getCheckedDate())
+                                        .build())
+                .collect(Collectors.toList());
+
+        webClientUtil.post(DATA_SERVER_URL + "/diary/default", RequestDiaryDto.of(member, tasks), Map.class)
+                .subscribe(
+                        response -> {
+                            diaryPredictRepository.save(DiaryPredict.builder()
+                                                                    .diaryDate(date)
+                                                                    .memberId(memberId)
+                                                                    .title(String.valueOf(response.get("title")))
+                                                                    .content(String.valueOf(response.get("content")))
+                                                                    .build());
+                        },
+                        error -> {
+                            new CustomException(ExceptionStatus.DIARY_CANNOT_WRITE);
+                        }
+                );
+    }
+
+    @Retryable(
+        maxAttempts = 3,
+        backoff = @Backoff(delay = 100L)
+    )
+    @Transactional
+    public void createConfirmDiary(Long memberId, LocalDate date) {
+        Member member = memberRepository.findMemberByMemberId(memberId).orElseThrow();
+
+        Optional<DiaryHistory> memberDiary = diaryHistoryRepository.findByMemberIdAndDiaryDate(memberId, date);
+        if (memberDiary.isPresent()) {
+            throw new CustomException(ExceptionStatus.TODAY_DIARY_IS_EXIST);
+        }
+
+        List<DiaryTodos> tasks = todoRepository.findTodayTodoListByMemberIdAndTodoDate(memberId, date)
+                .stream()
+                .map(todo -> DiaryTodos.builder()
+                        .task(todo.getCategory().getSmall())
+                        .content(todo.getContent())
+                        .date(todo.getCheckedDate())
+                        .build())
+                .collect(Collectors.toList());
+
+        webClientUtil.post(DATA_SERVER_URL + "/diary/default", RequestDiaryDto.of(member, tasks), Map.class)
+                .subscribe(
+                        response -> {
+                            diaryHistoryRepository.save(DiaryHistory.builder()
+                                                                    .diaryDate(date)
+                                                                    .memberId(memberId)
+                                                                    .title(String.valueOf(response.get("title")))
+                                                                    .content(String.valueOf(response.get("content")))
+                                                                    .similarity(0.0)
+                                                                    .build());
+
+                            memberService.updateStatusComplete(memberId, date);
+                        },
+                        error -> {
+                            new CustomException(ExceptionStatus.DIARY_CANNOT_WRITE);
+                        }
+                );
+    }
+
+    public ResponseDiaryDto getDiaryOnToday(Long memberId, LocalDate date) {
+        DiaryPredict diaryPredict = diaryPredictRepository.findByMemberIdAndDiaryDate(memberId, date)
+                                                          .orElseThrow(() -> new CustomException(ExceptionStatus.DIARY_DAY_NOT_EXIST));
+
+        return ResponseDiaryDto.ofToday(diaryPredict);
+    }
+
+    public ResponseDiaryDto getDiaryOnDate(Long memberId, LocalDate date) {
+        DiaryHistory diaryHistory = diaryHistoryRepository.findByMemberIdAndDiaryDate(memberId, date)
+                                                          .orElseThrow(() -> new CustomException(ExceptionStatus.DIARY_DAY_NOT_EXIST));
+
+        return ResponseDiaryDto.ofDate(diaryHistory);
     }
 }
+
