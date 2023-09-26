@@ -49,7 +49,7 @@ pipeline {
         stage("be container run") {
             steps {
                 script {
-                    sh "docker run -d -p 8181:8181 --name ${CONTAINER_NAME_BE} ${IMAGE_NAME_BE} -e TZ=Asia/Seoul"
+                    sh "docker run -d -p 8082:8082 --name ${CONTAINER_NAME_BE} ${IMAGE_NAME_BE} -e TZ=Asia/Seoul"
                 }
             }
         }
