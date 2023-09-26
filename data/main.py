@@ -63,4 +63,4 @@ if __name__ == "__main__":
     # from [module_name] import app # FastAPI 객체 가져오기
 
     # 8081 포트번호에서 FastAPI 어플리케이션 수신 대기
-    uvicorn.run(app, host="0.0.0.0", port=8181)
+    uvicorn.run(app, host="0.0.0.0", port=8082)
