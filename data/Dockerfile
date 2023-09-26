@@ -13,6 +13,6 @@ RUN pip install --upgrade pip
 
 RUN pip install -r requirements.txt
 
-EXPOSE 8181
+EXPOSE 8082
 # 서버 실행
 ENTRYPOINT ["python","main.py"]
