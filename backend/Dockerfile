@@ -8,7 +8,7 @@ FROM openjdk:11-jdk
 COPY build/libs/*.jar application.jar
 
 # 컨테이너 외부에서 사용할 포트 번호를 설정한다.
-EXPOSE 8180
+EXPOSE 8081
 
 # 이 컨테이너가 실행될 경우 수행할 스크립트를 지정한다.
 ENTRYPOINT ["java","-jar", "-Duser.timezone=Asia/Seoul", "application.jar"]
