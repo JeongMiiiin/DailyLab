@@ -26,6 +26,7 @@ export function register(config?: Config) {
   if (import.meta.env.PROD && "serviceWorker" in navigator) {
     // The URL constructor is available in all browsers that support SW.
     const publicUrl = new URL(import.meta.env.VITE_DEV as string, window.location.href);
+
     if (publicUrl.origin !== window.location.origin) {
       // Our service worker won't work if PUBLIC_URL is on a different origin
       // from what our page is served on. This might happen if a CDN is used to
@@ -34,7 +35,10 @@ export function register(config?: Config) {
     }
 
     window.addEventListener("load", () => {
-      const swUrl = `${import.meta.env.BASE_URL}sw.js`;
+      // ${import.meta.env.BASE_URL} = 루트 디렉토리
+      console.log("BASE_URL : ", `${import.meta.env.BASE_URL}`);
+      const swUrl = `${import.meta.env.BASE_URL}service-worker.js`;
+      // const swUrl = "service-worker.js";
 
       if (isLocalhost) {
         // This is running on localhost. Let's check if a service worker still exists or not.
@@ -57,10 +61,19 @@ export function register(config?: Config) {
 }
 
 function registerValidSW(swUrl: string, config?: Config) {
+  console.log("registerValidSW start!!");
+  console.log("sw URL : ", swUrl);
   navigator.serviceWorker
     .register(swUrl)
-    .then(registration => {
+    .then((registration) => {
+      console.log("then 안으로 진입")
       registration.onupdatefound = () => {
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: 'SKIP_WATING'});
+        } else {
+          window.location.reload();
+        }
+
         const installingWorker = registration.installing;
         if (installingWorker == null) {
           return;
