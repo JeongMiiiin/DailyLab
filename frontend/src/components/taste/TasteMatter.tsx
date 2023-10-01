@@ -112,7 +112,7 @@ import { toStringByFormatting } from "@/utils/date/DateFormatter";
 
     Composite.add(world, [bottom, top, left, right]);
     
-    for (let i = 0; i < emotionRatioList.length; i++) {
+    for (let i = 0; i < (emotionRatioList ? emotionRatioList.length : 0); i++) {
       const x = 120+Math.random()*50;
       const y = Math.random()*10;
       const circleRadius = 10;

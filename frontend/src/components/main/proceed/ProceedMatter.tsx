@@ -13,7 +13,7 @@ import { toStringByFormatting } from "@/utils/date/DateFormatter";
   useEffect(() => {
     const getData = async () => {
       await getDailyData({ date: curDate }, ({ data }) => {
-      setEmontionResultList(() => data.data as EmotionResultType[]);
+        setEmontionResultList(() => data.data as EmotionResultType[]);
       }, (error) => { console.log(error) });
     };
     
