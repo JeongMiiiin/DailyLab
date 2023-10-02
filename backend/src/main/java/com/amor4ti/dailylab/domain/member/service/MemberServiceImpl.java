@@ -18,21 +18,30 @@ import com.amor4ti.dailylab.global.response.ResponseService;
 import com.amor4ti.dailylab.global.response.ResponseStatus;
 import com.amor4ti.dailylab.global.util.CookieUtils;
 import com.amor4ti.dailylab.global.util.JwtProvider;
+import com.amor4ti.dailylab.global.util.WebClientUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class MemberServiceImpl implements MemberService {
+
+	@Value("${data-server-url}")
+	private String DATA_SERVER_URL;
 
 	private final MemberRepository memberRepository;
 	private final MemberStatusRepository memberStatusRepository;
@@ -45,6 +54,8 @@ public class MemberServiceImpl implements MemberService {
 	private final MbtiService mbtiService;
 
 	private final MemberMapper memberMapper;
+
+	private final WebClientUtil webClientUtil;
 
 	@Override
 	@Transactional
@@ -255,5 +266,87 @@ public class MemberServiceImpl implements MemberService {
 		memberRepository.save(findMember);
 
 		return responseService.successResponse(ResponseStatus.RESPONSE_SUCCESS);
+	}
+
+	@Override
+	public List getMemberSimilarityList() {
+		List<MemberSimilarityDto> memberSimilarityDtoList = memberRepository.findAllMemberSimilarityDto();
+		memberSimilarityDtoList.stream().parallel().forEach(dto ->
+			dto.setHobbyList(memberHobbyService.getHobbyIdListByMemberId(dto.getMemberId()))
+		);
+		return memberSimilarityDtoList;
+	}
+
+	@Override
+	public CommonResponse startMemberStatus(Long memberId, LocalDate date) {
+		Optional<MemberStatus> findMemberStatus = memberStatusRepository.findByMemberIdAndDate(memberId, date);
+
+		if (findMemberStatus.isPresent()) {
+			throw new CustomException(ExceptionStatus.MEMBER_ALREADY_PROCEED);
+		}
+
+		memberStatusRepository.save(MemberStatus.builder()
+												.memberId(memberId)
+												.date(date)
+												.status("proceed")
+												.build());
+
+		return responseService.successResponse(ResponseStatus.ACCESS_MEMBER_PROCEED);
+	}
+
+	@Override
+	public void updateStatusComplete(Long memberId, LocalDate date) {
+		MemberStatus memberStatus = memberStatusRepository.findByMemberIdAndDate(memberId, date)
+				.orElseThrow(() -> new CustomException(ExceptionStatus.MEMBER_NOT_FOUND));
+
+		memberStatus.setStatus("complete");
+		memberStatusRepository.save(memberStatus);
+	}
+
+	@Override
+	@Retryable(
+			maxAttempts = 3,
+			backoff = @Backoff(delay = 100L)
+	)
+	public CommonResponse getMemberLocation(MemberLocationDto memberLocationDto, Long memberId) {
+//		webClientUtil.post("http://localhost:8181" + "/location/" + memberId, memberLocationDto, Map.class)
+		webClientUtil.post(DATA_SERVER_URL + "/location/" + memberId, memberLocationDto, Map.class)
+				.subscribe(
+						response -> {
+							log.info("위경도 전송 성공!");
+						},
+						error -> {
+							throw new CustomException(ExceptionStatus.LOCATION_TRANSPORT_FAIL);
+						}
+				);
+
+        return responseService.successResponse(ResponseStatus.RESPONSE_SUCCESS);
+    }
+
+	@Override
+	public DataResponse getMemberStatusByRange(Long memberId, Map<String, String> paramMap) {
+		LocalDate startDay = LocalDate.parse(paramMap.get("startDay"));
+		LocalDate endDay = LocalDate.parse(paramMap.get("endDay"));
+		List<MemberStatusForCalendarDto> allStatusByRangeAndMemberId = memberRepository.findAllStatusByRangeAndMemberId(
+			memberId, startDay, endDay);
+
+		List<MemberStatusForCalendarDto> statusByRange = new ArrayList<>();
+
+		while (!startDay.isAfter(endDay)) {
+			boolean flag = false;
+			for (MemberStatusForCalendarDto member : allStatusByRangeAndMemberId) {
+				if (member.getSelectedDate().equals(startDay)) {
+					statusByRange.add(member);
+					flag = true;
+					break;
+				}
+			}
+			if (!flag) {
+				statusByRange.add(new MemberStatusForCalendarDto(startDay, "X"));
+			}
+			startDay = startDay.plusDays(1);
+		}
+
+		return responseService.successDataResponse(ResponseStatus.RESPONSE_SUCCESS, statusByRange);
 	}
 }

@@ -4,8 +4,8 @@ pipeline {
         stage("Set Variable") {
             steps {
                 script {
-                    IMAGE_NAME_FE = "dailylab-dev-react"
-                    CONTAINER_NAME_FE = "daily_dev_fe"
+                    IMAGE_NAME_FE = "dailylab-prod-react"
+                    CONTAINER_NAME_FE = "daily_prod_fe"
                     APPLICATION_ENV_PATH = "/usr/react"
                     PROJECT_DIR_FE = "frontend"
                 }
@@ -49,7 +49,7 @@ pipeline {
         stage("fe container run") {
             steps {
                 script {
-                    sh "docker run -d -p 3001:3000 --name ${CONTAINER_NAME_FE} ${IMAGE_NAME_FE}"
+                    sh "docker run -d -p 3000:3000 --name ${CONTAINER_NAME_FE} ${IMAGE_NAME_FE}"
                 }
             }
         }

@@ -3,15 +3,13 @@ package com.amor4ti.dailylab.domain.member.service;
 import javax.servlet.http.HttpServletResponse;
 
 import com.amor4ti.dailylab.domain.entity.Member;
-import com.amor4ti.dailylab.domain.member.dto.MainMemberDto;
-import com.amor4ti.dailylab.domain.member.dto.MemberMbtiDto;
-import com.amor4ti.dailylab.domain.member.dto.SignUpDto;
-import com.amor4ti.dailylab.domain.member.dto.UpdateMemberDto;
+import com.amor4ti.dailylab.domain.member.dto.*;
 import com.amor4ti.dailylab.global.response.CommonResponse;
 import com.amor4ti.dailylab.global.response.DataResponse;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 public interface MemberService {
 
@@ -47,4 +45,14 @@ public interface MemberService {
     List getProceedMemberList(LocalDate date);
 
 	CommonResponse exitMember(Long memberId);
+
+    List getMemberSimilarityList();
+
+    CommonResponse startMemberStatus(Long memberId, LocalDate date);
+
+    void updateStatusComplete(Long memberId, LocalDate date);
+
+    CommonResponse getMemberLocation(MemberLocationDto memberLocationDto, Long memberId);
+
+    DataResponse getMemberStatusByRange(Long memberId, Map<String, String> paramMap);
 }
