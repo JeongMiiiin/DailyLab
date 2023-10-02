@@ -4,20 +4,23 @@ import { getEmotionList, putEmotion } from "@/api/Emotion";
 import { EmotionType } from "@/type/EmotionType";
 import { Player } from '@lottiefiles/react-lottie-player';
 import { addHours } from "date-fns";
-import { useNavigate } from "react-router";
+import { cloeNoFaceImg } from "@/components/character/Character";
 
-const Emotion = () => {
-    const playerRef = useRef<Player | null>(null);
-    const handlePlay = () => playerRef.current?.play();
-//  const handleStop = () => playerRef.current.stop();
-    const handlePause = () => playerRef.current?.pause();
-    const navigate = useNavigate();
+interface props {
+    changeMode : () => void
+}
 
+const Emotion = (props: props) => {
     const [circleCount, setCircleCount] = useState(0);
     const [emotionNo, setEmotionNo] = useState(1); 
     const [emotionName, setEmotionName] = useState(""); 
     const [emotionType, setEmotionType] = useState(""); 
     const [emotionList, setEmotionList] = useState<EmotionType[]>([]);
+    useEffect(() => {
+        getEmotionList(({data}) => {
+            setEmotionList(data.data as EmotionType[]);
+        }, (error) => {console.log(error)});
+    }, []);
     
     const onEmotionClick = (emoId: number, name: string, type: string) => {
         setEmotionNo(emoId); // 버튼 클릭 시 emotionNo를 변경합니다.
@@ -25,10 +28,6 @@ const Emotion = () => {
         setEmotionType(type);
         updateEmotion(emoId);
         setCircleCount(prevCount => prevCount + 1);
-        handlePlay();
-        setTimeout(() => {
-            handlePause(); 
-        }, 300); 
     };
 
     const updateEmotion = async (emotionId : number) => {
@@ -36,57 +35,37 @@ const Emotion = () => {
         const newDate = addHours(now, 9);
         const formattedDateTime = newDate.toISOString().slice(0, 16).replace("T", " ");
 
-        console.log(emotionId, formattedDateTime)
         const emotionData = {
             emotionId: emotionId,
             timeStamp: formattedDateTime
         };
 
         await putEmotion(emotionData,({ data }) => {
-            console.log(data);
         }, (error) => {console.log(error)});
 
     };
-
-    const getList = async () => {
-        await getEmotionList(({data}) => {
-            console.log(data)
-            setEmotionList(data.data as EmotionType[])
-        }, (error) => {console.log(error)});
-    };
-
-    useEffect(() => {
-        void getList();
-    }, []);
   
     return (
       <div className="">
         <div className="absolute ml-8">
-            <div onClick={() => navigate('/')} className="flex items-center">
+            <div onClick={props.changeMode} className="flex items-center">
                 <img className="w-[30px] transform scale-x-[-1]" src="./assets/img/icon/arrow_right.png" alt="" />
                 <p className="text-2xl font-semibold">돌아가기</p>
             </div>
         </div>
         <div className="absolute top-[100px] left-[calc(50%-150px)] h-[230px]">
-            {/* lottie 시험하기 */}
-            {/* <Player
-            src="./assets/lottie/sample.json"
-            className="players"
-            // loop
-            // autoplay
-            style={{ height: '200px', width: '300px' }}
-            ref={playerRef}
-            /> */}
-            <div className="text-center font-semibold text-3xl">
-                <div className="bg-primary h-[70px] rounded-3xl pt-[10px]">
-                    {circleCount === 0 ? (
-                        <p className="mb-24 w-[300px] h-[40px] pt-[10px]">오늘은 어떤 기분이신가요?</p>
-                    ) : (
-                        <p className="mb-24 w-[300px] h-[40px]">이 감정은... {emotionName}!<br/> {emotionType === 'n' ? "안좋은 감정은 제가 대신 가져갈게요!" : "저까지 기분이 좋아지네요!"}</p>
-                    )}
+            <div className="text-center font-light text-2xl">
+                <div className="flex w-[300px] h-[80px] justify-center items-center bg-primary rounded-3xl">
+                    <div>
+                        {circleCount === 0 ? (
+                            <div>오늘은 어떤 기분이신가요?</div>
+                        ) : (
+                            <div>이 감정은... <p className="inline font-bold" >{emotionName}!</p><br/> {emotionType === 'n' ? "안좋은 감정은 제가 대신 가져갈게요" : "저까지 기분이 좋아지네요"}</div>
+                        )}
+                    </div>
                 </div>
                 <div className="mt-[50px]">
-                    <img className="absolute left-1/2 mb-24 transform -translate-x-1/2 w-[150px]" src="./assets/img/character/cloe_noface.png" alt="클로에" />
+                    <img className="absolute left-1/2 mb-24 transform -translate-x-1/2 w-[150px]" src={cloeNoFaceImg} alt="클로에" />
                     <img className="absolute left-1/2 transform mt-[20px] -translate-x-1/2 w-[100px]" src={circleCount === 0 ? `./assets/img/emotion/face/100.png` : `./assets/img/emotion/face/${emotionNo}.png`} alt="표정" />
                 </div>
             </div>
