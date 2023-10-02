@@ -7,7 +7,7 @@ import loginGoogle from "public/assets/img/login/login_google.png";
 const Login = () => {
     
     const loginHandler = (service : string) => {
-        const redirectUrl = (import.meta.env.VITE_DEV_API as string) + 'oauth2/authorization/' + service;
+        const redirectUrl = (import.meta.env.VITE_PROD_API as string) + 'oauth2/authorization/' + service;
         window.location.href = redirectUrl;
     }
 
